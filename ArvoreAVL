@@ -1,0 +1,318 @@
+public class No {
+	
+	private long id; // identificador do elemento
+	private Object elemento; // armazena o elemento de cada No
+	private No esq; // aponta para o filho esquerdo do nó
+	private No dir; // aponta para o filho direito do nó
+	private No pai; // aponta para o pai do nó
+	private long b; // balanceamento do NO
+
+	public No(long id, Object elemento, No esq, No dir) { // construtor classe No
+		this.id = id;
+		this.elemento = elemento;
+		this.esq = esq;
+		this.dir = dir;
+		this.b = 0; // inicia o nó sempre balanceado com 0
+		this.pai = null; // inicia o pai sempre como vazio
+	}
+
+	public String toString() { // método para converter o nó em texto
+		return Long.toString(getId());
+		// return ″Id:″+Long.toString(getId())+″ B:″+Long.toString(getB());
+
+	}
+
+	public void setId(long id) { // método para alterar o identificador do nó
+		this.id = id;
+	}
+
+	public long getId() { // método para receber o identificador do nó
+		return this.id;
+	}
+
+	public void setElemento(Object elemento) { // método para alterar o elemento
+		this.elemento = elemento;
+	}
+
+	public Object getElemento() { // método para receber o objeto contido no No
+		return elemento;
+	}
+
+	public void setEsq(No esq) { // método que altera o filho esquerdo
+		this.esq = esq;
+	}
+
+	public No getEsq() { // método que recebe o filho esquerdo do nó
+		return esq;
+	}
+
+	public void setDir(No dir) { // método que altera o filho direito
+		this.dir = dir;
+	}
+
+	public No getDir() { // método que recebe o filho direito do nó
+		return dir;
+	}
+
+	public void setB(long b) { // método para alterar o balanceamento
+		this.b = b;
+	}
+
+	public long getB() { // método que recebe o balanceamento
+		return b;
+	}
+
+	public void setPai(No pai) { // método que altera o pai do nó
+		this.pai = pai;
+	}
+
+	public No getPai() { // método que recebe o pai do nó
+		return pai;
+	}
+}
+
+public class ArvoreAVL {
+	
+	private No raiz;
+
+	public ArvoreAVL() // construtor da classe Arvore Binaria
+	{
+		this.raiz = null; // inicia a árvore vazia
+	}
+
+	public void insereAVL(long id, Object elemento) // inserção na AVL
+	{
+		No novoNo = new No(id, elemento, null, null);
+		insere(raiz, novoNo);
+	} // final do método insereAVL
+
+	private void insere(No atual, No novo) // inserção ordenada
+	{
+		if (atual == null) { // árvore vazia, insere na raiz
+			this.raiz = novo;
+			return;
+		}
+		if (novo.getId() < atual.getId()) { // vai inserir à esquerda
+			if (atual.getEsq() == null) { // achou a posição, basta inserir
+				atual.setEsq(novo);
+				novo.setPai(atual);
+				avaliaBalanceamento(atual);
+			} else { // continua buscando resursivamente à esquerda
+				insere(atual.getEsq(), novo);
+			}
+		} else {
+			if (novo.getId() > atual.getId()) { // vai inserir à direita
+				if (atual.getDir() == null) { // achou a posição, basta inserir
+					atual.setDir(novo);
+					novo.setPai(atual);
+					avaliaBalanceamento(atual);
+				} else { // continua buscando resursivamente à direita
+					insere(atual.getDir(), novo);
+				}
+			} else {
+				return; // achou o elemento igual, nada inserido
+			}
+		}
+	} // final método insere
+
+	private void avaliaBalanceamento(No atual) // avaliar o balanceamento da árvore AVL
+	{
+		calcBalanceamento(atual); // calcula o indicador B do nó atual
+		long b = atual.getB();
+		System.out.println("Valor de b => " + b);
+		if (b == -2) { // b=-2 indica que a subárvore direita ficou maior
+			if (altura(atual.getEsq().getEsq()) >= altura(atual.getEsq().getDir())) {
+				// testa netos esq
+				atual = rotacaoDir(atual);// subárvore esquerda doneto é maior, rotação simples
+			} else {
+				atual = duplaRotacaoDir(atual); // rotação dupla
+			}
+		} else {
+			if (b == 2) { // b=2 indica que a subárvore esquerda ficou maior
+				if (altura(atual.getDir().getDir()) >= altura(atual.getDir().getEsq())) {
+					// testa netos dir
+					atual = rotacaoEsq(atual); // subárvore direita do neto é maior, rotação simples
+				} else {
+					atual = duplaRotacaoEsq(atual); // rotação dupla
+				}
+			}
+		}
+		if (atual.getPai() != null) {
+			avaliaBalanceamento(atual.getPai()); // sempre vai testar o balanceamento do pai
+		} else {
+			this.raiz = atual; // senão atual passa a ser a raiz
+		}
+	} // final método avaliaBalanceamento
+
+	private void calcBalanceamento(No no) // calcular o indicador B de um nó
+	{
+		no.setB(altura(no.getDir()) - altura(no.getEsq()));
+	} // final método calcBalanceamento
+
+	private long altura(No atual) // calcula a altura da árvore
+	{
+		if (atual == null) { // se o nó está vazio sempre retorna -1
+			return -1;
+		}
+		if ((atual.getEsq() == null) && (atual.getDir() == null)) {
+			return 0;
+		} else {
+			if (atual.getEsq() == null) {
+				return 1 + altura(atual.getDir());
+			} else {
+				if (atual.getDir() == null) {
+					return 1 + altura(atual.getEsq());
+				} else {
+					return 1 + Math.max(altura(atual.getEsq()), altura(atual.getDir()));
+				}
+			}
+		}
+	} // final método altura
+
+	private No rotacaoEsq(No inicial) // realizar rotação à esquerda
+	{
+		No dir = inicial.getDir(); // salva apontamento do novo pai após rotação
+		dir.setPai(inicial.getPai());
+		inicial.setDir(dir.getEsq());// Neto esquerdo do filho direito passa a ser filho direito
+		if (inicial.getDir() != null) {
+			inicial.getDir().setPai(inicial);
+		}
+		dir.setEsq(inicial); // filho esquerdo passa a ser pai
+		inicial.setPai(dir);
+		if (dir.getPai() != null) { // acerta os apontamentos do novo pai
+			if (dir.getPai().getDir() == inicial) {
+				dir.getPai().setDir(dir);
+			} else if (dir.getPai().getEsq() == inicial) {
+				dir.getPai().setEsq(dir);
+			}
+		}
+		calcBalanceamento(inicial); // calcula os novos indicadores de balanceamento
+		calcBalanceamento(dir);
+		return dir;
+	} // final método rotação esquerda
+
+	private No rotacaoDir(No inicial) // realizar rotação à direita
+	{
+		No esq = inicial.getEsq(); // salva apontamento do novo pai após rotação
+		esq.setPai(inicial.getPai());
+		inicial.setEsq(esq.getDir());// Neto direito do filho esquerdo passa a ser filho esquerdo
+		if (inicial.getEsq() != null) {
+			inicial.getEsq().setPai(inicial);
+		}
+		esq.setDir(inicial); // filho esquerdo passa a ser pai
+		inicial.setPai(esq);
+		if (esq.getPai() != null) { // acerta os apontamentos do novo pai
+			if (esq.getPai().getDir() == inicial) {
+				esq.getPai().setDir(esq);
+			} else if (esq.getPai().getEsq() == inicial) {
+				esq.getPai().setEsq(esq);
+			}
+		}
+		calcBalanceamento(inicial);
+		// calcula os novos indicadores de balanceamento
+		calcBalanceamento(esq);
+		return esq;
+	} // final método rotação direita
+
+	private No duplaRotacaoDir(No inicial) // realizar dupla rotação à direita
+	{
+		inicial.setEsq(rotacaoEsq(inicial.getEsq()));
+		// rotaciona o filho esquerdo para a esquerda
+		return rotacaoDir(inicial); // e depois rotaciona a árvore à direita
+	} // final método dupla rotação direita
+
+	private No duplaRotacaoEsq(No inicial) // realizar dupla rotação à esqueda
+	{
+		inicial.setDir(rotacaoDir(inicial.getDir()));// rotacionaofilho direito para a direita
+		return rotacaoEsq(inicial); // e depois rotaciona a árvore à esquerda
+	} // final método dupla rotação esquerda
+
+	private void preFixado(No atual) // caminhamento pré-fixado da árvore binária
+	{
+		if (atual != null) {
+			System.out.println("Id: " + atual.getId() + " Elemento: " + atual.getElemento());
+			preFixado(atual.getEsq());
+			preFixado(atual.getDir());
+		}
+	} // final método preFixado
+
+	public void imprimeElementosArvore() // impressão dos elementos da árvore
+	{
+		System.out.println("--------impressao PreFixado-----------------");
+		preFixado(raiz);
+		// System.out.println("--------impressao PosFixado------------------");
+		// posFixado(raiz);
+		// System.out.println("--------impressao SimFixado------------------");
+		// simFixado(raiz);
+	} // final do método para impressão
+
+
+	/* impressao da arvore ------*/
+	private void imp(No atual, long n) {
+		String tab = "";
+		for (long i = 1; i <= n; i++) {
+			tab += "\t";
+		}
+		if (atual != null) {
+			n++;
+			System.out.println(tab + atual.getId());
+			imp(atual.getEsq(), n);
+			imp(atual.getDir(), n);
+			
+		} else {
+			System.out.println(tab + " -");
+		}
+	}
+
+	public void auximp() {
+		long n = 0;
+		imp(raiz, n);
+	}
+  
+  public int contaNoEsquerdo(No no) {
+	    if (no == null) return 0;
+
+	    int contador = 0;
+	    if (no.getEsq() != null) {
+	        contador += 1 + contaNoEsquerdo(no.getEsq());
+	    }
+	    if (no.getDir() != null) {
+	        contador += contaNoEsquerdo(no.getDir());
+	    }
+	    
+	    return contador;
+	}
+
+	public void imprimeContaNoEsquerdo() {
+		System.out.println(
+				"O número de nós esquerdos desta árvore é: "
+						+ contaNoEsquerdo(raiz));
+	}
+} 
+
+
+public class ExemploAVL {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		
+		ArvoreAVL a = new ArvoreAVL(); // cria a árvore binária de busca
+		a.insereAVL(31, "31");
+		a.insereAVL(18, "18");
+		a.insereAVL(40, "40");
+		a.insereAVL(12, "12");
+		a.insereAVL(21, "21");
+		//a.insereAVL(20,"20");  // pg 69 apostila
+		a.insereAVL(15,"15");  // pg 75 apostila
+		a.imprimeElementosArvore();
+		System.out.println("--------impressao Com Recuo-----------------");
+		a.auximp();
+		
+		
+		System.out.println("\n\n");
+		
+		a.imprimeContaNoEsquerdo();
+
+	}
+
+}
